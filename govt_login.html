@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Official Login - E-Gov</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; display: flex; justify-content: center; align-items: center; height: 100vh; margin: 0; }
+        .login-box { background: white; padding: 40px; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2); width: 350px; text-align: center; }
+        .login-box h2 { color: #1a5276; margin-bottom: 30px; }
+        .login-box input { width: 100%; padding: 12px; margin-bottom: 20px; border: 1px solid #ced4da; border-radius: 6px; box-sizing: border-box; }
+        .login-box button { background-color: #dc3545; color: white; padding: 12px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-weight: 600; transition: background-color 0.3s; }
+        .login-box button:hover { background-color: #c82333; }
+        .alert { padding: 10px; margin-bottom: 15px; border-radius: 4px; display: none; }
+        .alert-error { background-color: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+    </style>
+</head>
+<body>
+
+<div class="login-box">
+    <h2>🏛️ Official Login</h2>
+    <p style="color: #6c757d;">Two-Factor Authentication Required</p>
+
+    <div id="login-alert" class="alert alert-error"></div>
+
+    <input type="text" id="username" placeholder="Official Email/Username" required>
+    <input type="password" id="password" placeholder="Password" required>
+    <input type="text" id="govt-id" placeholder="Unique Government ID (e.g., GOV1001A)" required>
+
+    <button onclick="handleLogin()">Login to Dashboard</button>
+</div>
+
+<script>
+    function handleLogin() {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const govtId = document.getElementById('govt-id').value;
+        const alertBox = document.getElementById('login-alert');
+
+        alertBox.style.display = 'none';
+
+        if (!username || !password || !govtId) {
+            alertBox.textContent = "All fields are mandatory.";
+            alertBox.style.display = 'block';
+            return;
+        }
+
+        const loginData = { username, password, govt_id: govtId };
+
+        // Calls the Flask backend for verification
+        fetch('http://127.0.0.1:5000/api/official/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // SUCCESS: Redirect to the official dashboard, passing department and name
+                alert(`Welcome, ${data.official_name}! Loading ${data.department} Dashboard.`);
+                
+                // Redirect to the new dashboard page (Step 4)
+                window.location.href = 'official_dashboard.html?dept=' + data.department + '&name=' + data.official_name + '&token=' + data.token;
+
+            } else {
+                // FAILURE: Display the error message from the backend
+                alertBox.textContent = data.message;
+                alertBox.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            console.error('Network error during login:', error);
+            alertBox.textContent = "Could not connect to server. Check network connection.";
+            alertBox.style.display = 'block';
+        });
+    }
+</script>
+
+</body>
+</html>
